@@ -31,6 +31,7 @@ if (require('electron-squirrel-startup')) {
 
 if (process.argv.indexOf('--verbose') > -1) {
   log.setLevel('DEBUG');
+  process.argv = process.argv.filter((arg) => arg !== '--verbose');
 }
 
 const appArgs = JSON.parse(fs.readFileSync(APP_ARGS_FILE_PATH, 'utf8'));
