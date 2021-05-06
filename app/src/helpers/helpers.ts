@@ -6,6 +6,13 @@ import { BrowserWindow } from 'electron';
 import * as log from 'loglevel';
 
 export const INJECT_DIR = path.join(__dirname, '..', 'inject');
+export const GET_MEDIA_DISPLAY_CSS = path.join(
+  __dirname,
+  '..',
+  'lib',
+  'static',
+  'getMediaDisplay',
+);
 
 export function isOSX(): boolean {
   return os.platform() === 'darwin';
@@ -99,14 +106,6 @@ function domainify(url: string): string {
   return domain;
 }
 
-export function shouldInjectCss(): boolean {
-  try {
-    return fs.existsSync(INJECT_DIR);
-  } catch (e) {
-    return false;
-  }
-}
-
 export function getCssToInject(): string {
   let cssToInject = '';
   const cssFiles = fs
@@ -117,6 +116,18 @@ export function getCssToInject(): string {
     .map((cssFileStat) =>
       path.resolve(path.join(INJECT_DIR, cssFileStat.name)),
     );
+  cssFiles.push(
+    ...fs
+      .readdirSync(GET_MEDIA_DISPLAY_CSS, { withFileTypes: true })
+      .filter(
+        (getMediaDisplayCSS) =>
+          getMediaDisplayCSS.isFile() &&
+          getMediaDisplayCSS.name.endsWith('.css'),
+      )
+      .map((cssFileStat) =>
+        path.resolve(path.join(GET_MEDIA_DISPLAY_CSS, cssFileStat.name)),
+      ),
+  );
   for (const cssFile of cssFiles) {
     log.debug('Injecting CSS file', cssFile);
     const cssFileData = fs.readFileSync(cssFile);

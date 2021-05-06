@@ -2,10 +2,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import {
-  BrowserWindow,
-  shell,
-  ipcMain,
   dialog,
+  ipcMain,
+  shell,
+  BrowserWindow,
   Event,
   WebContents,
 } from 'electron';
@@ -16,7 +16,6 @@ import {
   isOSX,
   linkIsInternal,
   getCssToInject,
-  shouldInjectCss,
   getAppIcon,
   nativeTabsSupported,
   getCounterValue,
@@ -60,10 +59,6 @@ function hideWindow(
 }
 
 function injectCss(browserWindow: BrowserWindow): void {
-  if (!shouldInjectCss()) {
-    return;
-  }
-
   const cssToInject = getCssToInject();
 
   browserWindow.webContents.on('did-navigate', () => {
