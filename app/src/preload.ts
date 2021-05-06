@@ -26,6 +26,16 @@ import { ipcRenderer } from 'electron';
 const log = console; // since we can't have `loglevel` here in preload
 
 export const INJECT_DIR = path.join(__dirname, '..', 'inject');
+export const GET_MEDIA_DISPLAY_JS = path.resolve(
+  path.join(
+    __dirname,
+    '..',
+    'lib',
+    'static',
+    'getMediaDisplay',
+    'getMediaDisplay.js',
+  ),
+);
 
 /**
  * Patches window.Notification to:
@@ -52,6 +62,9 @@ function setNotificationCallback(createCallback, clickCallback) {
 }
 
 function injectScripts() {
+  log.debug('Injecting JS file', GET_MEDIA_DISPLAY_JS);
+  require(GET_MEDIA_DISPLAY_JS);
+
   const needToInject = fs.existsSync(INJECT_DIR);
   if (!needToInject) {
     return;
