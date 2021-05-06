@@ -13,7 +13,9 @@ export function createLoginWindow(loginCallback): BrowserWindow {
     },
   });
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  loginWindow.loadURL(`file://${path.join(__dirname, 'static/login.html')}`);
+  loginWindow.loadURL(
+    `file://${path.join(__dirname, 'static', 'login', 'login.html')}`,
+  );
 
   ipcMain.once('login-message', (event, usernameAndPassword) => {
     loginCallback(usernameAndPassword[0], usernameAndPassword[1]);
