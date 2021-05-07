@@ -5,12 +5,21 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
   injectScripts(); // eslint-disable-line @typescript-eslint/no-use-before-define
+  injectGetDisplayMedia()
+    .then((sources) => {
+      // eslint-disable-next-line no-console
+      console.log(sources);
+    })
+    .catch((reason?: any) => {
+      // eslint-disable-next-line no-console
+      console.error(reason);
+    });
 });
 
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { ipcRenderer } from 'electron';
+import { desktopCapturer, ipcRenderer, DesktopCapturerSource } from 'electron';
 
 // Do *NOT* add 3rd-party imports here in preload (except for webpack `externals` like electron).
 // They will work during development, but break in the prod build :-/ .
@@ -26,16 +35,22 @@ import { ipcRenderer } from 'electron';
 const log = console; // since we can't have `loglevel` here in preload
 
 export const INJECT_DIR = path.join(__dirname, '..', 'inject');
-export const GET_MEDIA_DISPLAY_JS = path.resolve(
-  path.join(
-    __dirname,
-    '..',
-    'lib',
-    'static',
-    'getMediaDisplay',
-    'getMediaDisplay.js',
-  ),
-);
+// export const GET_MEDIA_DISPLAY_JS = path.resolve(
+//   path.join(
+//     __dirname,
+//     '..',
+//     'lib',
+//     'static',
+//     'getMediaDisplay',
+//     'getMediaDisplay.js',
+//   ),
+// );
+
+declare global {
+  interface MediaDevices {
+    getDisplayMedia(): Promise<unknown>;
+  }
+}
 
 /**
  * Patches window.Notification to:
@@ -61,10 +76,100 @@ function setNotificationCallback(createCallback, clickCallback) {
   window.Notification = newNotify;
 }
 
-function injectScripts() {
-  log.debug('Injecting JS file', GET_MEDIA_DISPLAY_JS);
-  require(GET_MEDIA_DISPLAY_JS);
+async function injectGetDisplayMedia(): Promise<DesktopCapturerSource[]> {
+  log.log('getDisplayMedia');
 
+  // @ts-ignore
+  log.log({ desktopCapturer });
+  const sources = await desktopCapturer.getSources({
+    types: ['screen', 'window'],
+  });
+
+  log.log('SOURCES', sources);
+  const sourceItems = sources.map((source) => {
+    const li = document.createElement('li');
+    li.classList.add('desktop-capturer-selection__item');
+
+    const liButton = document.createElement('button');
+    liButton.classList.add('desktop-capturer-selection__btn');
+    liButton.setAttribute('data-id', source.id);
+    liButton.setAttribute('title', source.name);
+
+    const liButtonImg = document.createElement('img');
+    liButtonImg.classList.add('desktop-capturer-selection__thumbnail');
+    liButtonImg.setAttribute('src', source.thumbnail.toDataURL());
+
+    const liButtonSpan = document.createElement('span');
+    liButtonSpan.classList.add('desktop-capturer-selection__name');
+    liButtonSpan.innerText = source.name;
+
+    liButton.appendChild(liButtonImg);
+    liButton.appendChild(liButtonSpan);
+
+    li.appendChild(liButton);
+
+    return li;
+  });
+
+  const selectionElem = document.createElement('div');
+  selectionElem.classList.add('desktop-capturer-selection');
+
+  const selectionElemDiv = document.createElement('div');
+  selectionElemDiv.classList.add('desktop-capturer-selection__scroller');
+
+  const selectionElemDivUl = document.createElement('ul');
+  selectionElemDivUl.classList.add('desktop-capturer-selection__list');
+
+  sourceItems.forEach((li) => selectionElemDivUl.appendChild(li));
+
+  selectionElemDiv.appendChild(selectionElemDivUl);
+
+  selectionElem.appendChild(selectionElemDiv);
+  selectionElemDiv.style.display = 'none';
+
+  document.body.appendChild(selectionElem);
+
+  // @ts-ignore we're polyfilling this non-existant method
+  window.navigator.mediaDevices.getDisplayMedia = async function (): Promise<MediaStream> {
+    // selectionElemDiv.style.display = 'flex';
+    // return new Promise((resolve, reject) => {
+    //   const buttons = Array.from(
+    //     document.getElementsByClassName('desktop-capturer-selection__btn'),
+    //   );
+    //   buttons.forEach((button) => {
+    //     button.addEventListener('click', () => {
+    //       try {
+    //         const userMedia = window.navigator.mediaDevices.getUserMedia({
+    //           audio: {
+    //             // @ts-ignore use chromium specific filters that Electron doesn't expose by default
+    //             mandatory: {
+    //               chromeMediaSource: 'desktop',
+    //             },
+    //           },
+    //           video: {
+    //             // @ts-ignore use chromium specific filters that Electron doesn't expose by default
+    //             mandatory: {
+    //               chromeMediaSource: 'desktop',
+    //               chromeMediaSourceId: button.getAttribute('data-id'),
+    //             },
+    //           },
+    //         });
+    //         selectionElem.remove();
+    //         resolve(userMedia);
+    //       } catch (err) {
+    //         reject(err);
+    //       }
+    //     });
+    //   });
+    // });
+    alert('test');
+    return new Promise((resolve) => resolve(null));
+  };
+
+  return sources;
+}
+
+function injectScripts() {
   const needToInject = fs.existsSync(INJECT_DIR);
   if (!needToInject) {
     return;
@@ -78,7 +183,7 @@ function injectScripts() {
       )
       .map((jsFileStat) => path.join('..', 'inject', jsFileStat.name));
     for (const jsFile of jsFiles) {
-      log.debug('Injecting JS file', jsFile);
+      log.info('Injecting JS file', jsFile);
       require(jsFile);
     }
   } catch (error) {
@@ -96,11 +201,19 @@ function notifyNotificationClick() {
 setNotificationCallback(notifyNotificationCreate, notifyNotificationClick);
 
 ipcRenderer.on('params', (event, message) => {
-  log.debug('ipcRenderer.params', { event, message });
+  log.info('ipcRenderer.params', { event, message });
   const appArgs = JSON.parse(message);
   log.info('nativefier.json', appArgs);
 });
 
 ipcRenderer.on('debug', (event, message) => {
-  log.debug('ipcRenderer.debug', { event, message });
+  log.info('ipcRenderer.debug', { event, message });
 });
+
+export async function getSources(): Promise<DesktopCapturerSource[]> {
+  const sources = await desktopCapturer.getSources({
+    types: ['screen', 'window'],
+    fetchWindowIcons: true,
+  });
+  return sources;
+}

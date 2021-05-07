@@ -312,6 +312,14 @@ export function createMainWindow(
     window.webContents.on('new-window', onNewWindow);
     window.webContents.on('will-navigate', onWillNavigate);
     window.webContents.on('will-prevent-unload', onWillPreventUnload);
+    window.webContents.session.setPermissionCheckHandler((): boolean => {
+      return true;
+    });
+    window.webContents.session.setPermissionRequestHandler(
+      (_webContents, _permission, callback) => {
+        callback(true);
+      },
+    );
   }
 
   const createNewTab = (url: string, foreground: boolean): BrowserWindow => {
