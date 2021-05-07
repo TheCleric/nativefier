@@ -41,8 +41,8 @@ export const INJECT_DIR = path.join(__dirname, '..', 'inject');
 //     '..',
 //     'lib',
 //     'static',
-//     'getMediaDisplay',
-//     'getMediaDisplay.js',
+//     'getDisplayMedia',
+//     'getDisplayMedia.js',
 //   ),
 // );
 

@@ -11,7 +11,7 @@ export const GET_MEDIA_DISPLAY_CSS = path.join(
   '..',
   'lib',
   'static',
-  'getMediaDisplay',
+  'getDisplayMedia',
 );
 
 export function isOSX(): boolean {
@@ -120,9 +120,9 @@ export function getCssToInject(): string {
     ...fs
       .readdirSync(GET_MEDIA_DISPLAY_CSS, { withFileTypes: true })
       .filter(
-        (getMediaDisplayCSS) =>
-          getMediaDisplayCSS.isFile() &&
-          getMediaDisplayCSS.name.endsWith('.css'),
+        (getDisplayMediaCSS) =>
+          getDisplayMediaCSS.isFile() &&
+          getDisplayMediaCSS.name.endsWith('.css'),
       )
       .map((cssFileStat) =>
         path.resolve(path.join(GET_MEDIA_DISPLAY_CSS, cssFileStat.name)),
