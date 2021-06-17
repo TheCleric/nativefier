@@ -38,18 +38,19 @@
     "changelog": "./.github/generate-changelog",
     "ci": "npm run lint && npm test",
     "clean": "rimraf coverage/ lib/ app/lib/ app/dist/",
-    "clean:full": "rimraf coverage/ lib/ app/lib/ app/dist/ app/node_modules/ node_modules/",
+    "clean:full": "npm run clean && rimraf app/node_modules/ node_modules/",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint:format": "prettier --write 'src/**/*.ts' 'app/src/**/*.ts'",
     "lint": "eslint . --ext .ts",
     "list-outdated-deps": "npm out; cd app && npm out; true",
     "prepare": "cd app && npm install && cd .. && npm run build",
+    "test": "jest --testRegex '[-.]test\\.js$'",
     "test:integration": "jest --testRegex '.*integration-test.js'",
     "test:manual": "npm run build && ./.github/manual-test",
+    "test:playwright": "jest --testRegex '.*playwright-test.js'",
     "test:unit": "jest",
     "test:watch": "echo 'Remember to run npm run build:watch for the test watcher to work!' && jest --watchAll --collectCoverage=false",
     "test:withlog": "LOGLEVEL=trace npm run test",
-    "test": "jest --testRegex '[-.]test\\.js$'",
     "watch": "npx concurrently \"npm:*:watch\""
   },
   "dependencies": {
@@ -76,10 +77,12 @@
     "@types/tmp": "^0.2.0",
     "@typescript-eslint/eslint-plugin": "^4.27.0",
     "@typescript-eslint/parser": "^4.27.0",
+    "electron": "^12.0.11",
     "eslint": "^7.28.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.0",
-    "jest": "^27.0.4",
+    "jest": "^26.6.3",
+    "playwright": "^1.12.1",
     "prettier": "^2.3.1",
     "rimraf": "^3.0.2",
     "ts-loader": "^9.2.3",
@@ -93,6 +96,14 @@
   },
   "jest": {
     "collectCoverage": true,
+    "collectCoverageFrom": [
+      "./lib/**/*.js",
+      "/app/dist/**/*.js",
+      "/app/lib/**/*.js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "[.-]test.js$"
+    ],
     "moduleNameMapper": {
       "^electron$": "<rootDir>/app/dist/mocks/electron.js"
     },
